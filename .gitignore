@@ -1,0 +1,17 @@
+# הסתרת קובץ משתני הסביבה והמפתחות (קריטי!)
+.env
+
+# קבצי זמניים של פייתון
+__pycache__/
+*.log
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+ENV/
+
+# קבצי מערכת הפעלה
+.DS_Store
+Thumbs.db

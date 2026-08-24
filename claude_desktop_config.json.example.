@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "leetcode_solver": {
+      "command": "bash",
+      "args": [
+        "-c",
+        "PYTHONPATH=/path/to/your/project /path/to/your/project/.venv/bin/python /path/to/your/project/src/mcp_server.py"
+      ],
+      "env": {
+        "ANTHROPIC_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
