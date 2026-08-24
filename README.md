@@ -15,11 +15,11 @@ An AI-powered LeetCode mentor built with **Streamlit** and **LangGraph**. It orc
 ---
 
 ## 🏗️ Multi-Agent Architecture
-
+```text
 Supervisor ──┬──▶ Study Agent ──────────────────────────────▶ Documenter ──▶ Output
              ├──▶ Code Reviewer ────────────────────────────▶ Documenter ──▶ Output
              └──▶ Solver ──▶ Performance ──▶ Tester ────────▶ Documenter ──▶ Output
-
+```
 
 | Agent | Responsibility |
 |---|---|
