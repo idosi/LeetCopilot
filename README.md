@@ -1,35 +1,62 @@
-# Multi-Agent LeetCode Solver
+# 🧠 LeetCopilot — Multi-Agent Algorithm Mentor
 
-A Streamlit application that uses a LangGraph multi-agent pipeline powered by Claude to solve LeetCode problems. Given a problem statement, it generates naive and optimal Python solutions, analyzes time/space complexity, runs sandboxed tests, and compiles a Markdown report.
+An AI-powered LeetCode mentor built with **Streamlit** and **LangGraph**. It orchestrates specialized agents to solve problems, teach algorithmic intuition, audit code complexity, and execute sandboxed test simulations across multiple programming languages.
 
-## Architecture
+---
 
-```
-Supervisor → Solver → Performance → Tester → Documenter
-```
+## 🌟 Key Features
+
+- **🚀 Full Solution Mode**: Generates Naive & Optimal solutions with deep Big-O complexity breakdowns and edge-case testing.
+- **🧠 Study Mode**: Socratic hint-based workflow focusing on algorithmic intuition without spoiling the full solution.
+- **🔍 Review Mode**: Analyzes your own code, audits constants/bottlenecks, and gives an actionable optimization roadmap.
+- **🌍 Polyglot Support**: Python, Java, JavaScript, and C++.
+- **⚡ Multi-Model Engine**: Seamless support for Anthropic Claude, OpenAI, and Google Gemini models.
+
+---
+
+## 🏗️ Multi-Agent Architecture
+
+Supervisor ──┬──▶ Study Agent ──────────────────────────────▶ Documenter ──▶ Output
+             ├──▶ Code Reviewer ────────────────────────────▶ Documenter ──▶ Output
+             └──▶ Solver ──▶ Performance ──▶ Tester ────────▶ Documenter ──▶ Output
+
 
 | Agent | Responsibility |
 |---|---|
-| Supervisor | Validates the problem and routes the workflow |
-| Solver | Generates naive + optimal Python solutions |
-| Performance | Analyzes Big O time & space complexity |
-| Tester | Runs solutions in a sandboxed subprocess |
-| Documenter | Compiles the final Markdown report |
+| **Supervisor** | Validates input format, determines strategy, and routes execution |
+| **Study Agent** | Provides Socratic guidance, mental models, and progressive hints |
+| **Solver** | Implements both Naive and Optimal algorithm implementations |
+| **Performance** | Formal Big-O analysis ($T(N)$, $S(N)$) and space-time trade-offs |
+| **Tester** | Simulates and verifies test cases (Base, Edge, Boundary) |
+| **Code Reviewer** | Audits user code for algorithmic bottlenecks and clean code principles |
+| **Documenter** | Compiles unified, structured Markdown reports |
 
-## Requirements
+---
 
-- Python 3.9+
-- An [Anthropic API key](https://console.anthropic.com/)
+## 📦 Requirements & Installation
 
-## Installation
+- Python 3.10+
+- API Key for **Anthropic**, **OpenAI**, or **Google GenAI**
 
 ```bash
-git clone <repo-url>
-cd leetCode-Solver
-python -m venv .venv
-source .venv/bin/activate      # Windows: .venv\Scripts\activate
+# Clone the repository
+git clone [https://github.com/idosi/LeetCopilot.git](https://github.com/idosi/LeetCopilot.git)
+cd LeetCopilot
+```
+
+# Create and activate virtual environment
+```bash
+python3 -m venv .venv
+source .venv/bin/activate    # On Windows: .venv\Scripts\activate
+```
+
+# Install dependencies
+```bash
 pip install -r requirements.txt
 ```
+
+⚙️ Configuration
+Create a .env file in the root directory:
 
 **Dependencies** (`requirements.txt`):
 
@@ -39,49 +66,28 @@ pip install -r requirements.txt
 | langchain-anthropic | 0.3.22 |
 | langgraph | 0.6.11 |
 | python-dotenv | 1.2.1 |
+| langchain-google-genai | 2.0.0 |
 | pydantic | 2.13.4 |
 
-## Configuration
 
-Copy `.env.example` to `.env` and set your values:
+# At least one LLM key is required:
+ANTHROPIC_API_KEY=your_anthropic_api_key
+OPENAI_API_KEY=your_openai_api_key
+GOOGLE_API_KEY=your_gemini_api_key
 
-```bash
-cp .env.example .env
-```
-
-`.env` variables:
-
-```dotenv
-ANTHROPIC_API_KEY=your_api_key_here
-LLM_MODEL=claude-sonnet-4-6
-LLM_TIMEOUT_SECONDS=30
+# Optional settings
+LLM_TIMEOUT_SECONDS=45
 SANDBOX_TIMEOUT_SECONDS=5
-SANDBOX_MEMORY_LIMIT_MB=512
-```
 
-`LLM_MODEL` must be set to `claude-sonnet-4-6`. The other variables have the defaults shown above.
-
-## Running
-
+🚀 Running the Web App
 ```bash
 streamlit run src/app.py
 ```
 
-Open [http://localhost:8501](http://localhost:8501) in your browser.
+Open http://localhost:8501 in your browser.
 
-## Usage
-
-1. Enter the problem title (e.g. `Two Sum`)
-2. Paste the full problem description including examples
-3. Optionally add constraints
-4. Click **Solve Problem** and wait ~30–90 seconds
-
-Results are presented across four tabs: Problem & Report, Code Solutions, Performance, and Test Results.
-
-
-## 🚀 Integration with Claude Desktop
-
-To use this LeetCode Solver directly from your Claude Desktop application, follow these steps:
+🔌 Integration with Claude Desktop (MCP)
+To connect LeetCopilot directly as a tool inside Claude Desktop:
 
 1. Open your Claude Desktop configuration file:
    - **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
@@ -90,13 +96,17 @@ To use this LeetCode Solver directly from your Claude Desktop application, follo
 2. Add the following configuration under the `mcpServers` key (make sure to replace `/path/to/your/project` with your actual absolute project path, and update your API key):
 
 ```json
-"leetcode_solver": {
-  "command": "bash",
-  "args": [
-    "-c",
-    "PYTHONPATH=/path/to/leetcode-Solver /path/to/leetcode-Solver/.venv/bin/python /path/to/leetcode-Solver/src/mcp_server.py"
-  ],
-  "env": {
-    "ANTHROPIC_API_KEY": "your_sk_ant_key"
+{
+  "mcpServers": {
+    "leetcode_copilot": {
+      "command": "bash",
+      "args": [
+        "-c",
+        "PYTHONPATH=/path/to/LeetCopilot /path/to/LeetCopilot/.venv/bin/python /path/to/LeetCopilot/src/mcp_server.py"
+      ],
+      "env": {
+        "ANTHROPIC_API_KEY": "your_sk_ant_key"
+      }
+    }
   }
 }
