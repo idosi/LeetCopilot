@@ -67,7 +67,12 @@ def _algorithmic_intuition_section(state: LeetCodeSolverState, language: str) ->
     description = state.get("problem_description", "")
     constraints = state.get("problem_constraints", "")
     optimal = state.get("optimal_solution") or {}
-    optimal_desc = _safe_get(optimal, "description", "") or _safe_get(optimal, "explanation", "")
+    optimal_cx = state.get("optimal_complexity") or {}
+
+    # שימוש בהסבר הסיבוכיות המעמיק אם קיים, אחרת ירידה להסבר הפתרון
+    optimal_exp = _safe_get(optimal_cx, "time_explanation", "")
+    if not optimal_exp or optimal_exp == "N/A":
+        optimal_exp = _safe_get(optimal, "description", "")
 
     clues: list[str] = []
     desc_lower = (description + " " + constraints).lower()
@@ -88,8 +93,8 @@ def _algorithmic_intuition_section(state: LeetCodeSolverState, language: str) ->
     cognitive_steps = [
         f"1. **Identify the bottleneck** — what makes brute force slow for `{title}`?",
         "2. **Find the invariant** — what property holds for the start of every optimal sequence?",
-        "3. **Choose the data structure** — use a Hash Table for O(1) membership queries.",
-        "4. **Trace a small example** to verify boundary cases (duplicates, empty arrays).",
+        "3. **Choose the data structure** — select containers that optimize critical lookup paths.",
+        "4. **Trace edge cases** — verify boundaries like duplicates, negative numbers, or carry overflow.",
     ]
 
     parts = [
@@ -105,12 +110,12 @@ def _algorithmic_intuition_section(state: LeetCodeSolverState, language: str) ->
         "",
     ]
     parts.extend(cognitive_steps)
-    if optimal_desc and optimal_desc != "N/A":
+    if optimal_exp and optimal_exp != "N/A":
         parts += [
             "",
             "### Why the optimal approach works",
             "",
-            optimal_desc,
+            optimal_exp,
         ]
     return "\n".join(str(p) for p in parts if p is not None)
 
@@ -141,9 +146,9 @@ def _build_report(state: LeetCodeSolverState) -> str:
     total = len(test_results)
     passed_count = sum(1 for r in test_results if str(_safe_get(r, "passed")).lower() in ("true", "1"))
 
-    naive_code = _safe_get(naive, "code", "_Not generated._")
+    naive_code = _safe_get(naive, "code", "_Not generated._").replace("\\n", "\n")
     naive_desc = _safe_get(naive, "description", "") or _safe_get(naive, "explanation", "_No description._")
-    optimal_code = _safe_get(optimal, "code", "_Not generated._")
+    optimal_code = _safe_get(optimal, "code", "_Not generated._").replace("\\n", "\n")
     optimal_desc = _safe_get(optimal, "description", "") or _safe_get(optimal, "explanation", "_No description._")
 
     naive_time = _safe_get(naive_cx, "time_complexity", "O(N log N)")

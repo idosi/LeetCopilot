@@ -234,26 +234,47 @@ h1, h2, h3, h4 {
     transform: translateY(-1px) !important;
 }
 
-/* ── Code blocks ─────────────────────────────── */
-div[data-testid="stCodeBlock"] {
-    background-color: #1e1e2e !important;
-    border: 1px solid #2d2d3f !important;
-    border-radius: var(--radius-sm) !important;
-    box-shadow: var(--shadow-sm) !important;
+/* ── Code blocks & Pre ───────────────────────── */
+/* בלוקי קוד ב-Markdown וב-st.code */
+div[data-testid="stCodeBlock"],
+.stMarkdown pre {
+    background-color: #0f172a !important; /* רקע כהה ואחיד (Slate 900) */
+    border: 1px solid #334155 !important;
+    border-radius: 12px !important;
+    padding: 1.2rem !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    overflow-x: auto !important;
 }
 
-div[data-testid="stCodeBlock"]:hover,
-div[data-testid="stCodeBlock"] pre,
-div[data-testid="stCodeBlock"] code {
-    background-color: #1e1e2e !important;
+/* הטקסט והשורות בתוך בלוק הקוד */
+.stMarkdown pre code,
+div[data-testid="stCodeBlock"] code,
+div[data-testid="stCodeBlock"] pre {
+    background: transparent !important; /* מבטל את הרקע הסגול שמופיע בכל שורה */
+    color: #e2e8f0 !important;          /* טקסט בהיר וקריא */
+    font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    font-size: 0.9rem !important;
+    line-height: 1.65 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    letter-spacing: 0.02em !important;
 }
 
-.stMarkdown code {
-    background: var(--accent-soft) !important;
-    color: var(--accent) !important;
+/* צביעת הערות (comments) וקוד קריא יותר */
+.stMarkdown pre code .hljs-comment {
+    color: #94a3b8 !important;
+    font-style: italic !important;
+}
+
+/* מחזיר את העיצוב הסגול היפה *רק* ל-inline code (שמילים בודדות בטקסט הרגיל) */
+.stMarkdown :not(pre) > code {
+    background: rgba(79, 70, 229, 0.08) !important;
+    color: #4f46e5 !important;
+    border: 1px solid rgba(79, 70, 229, 0.18) !important;
     border-radius: 5px !important;
-    padding: 2px 7px !important;
-    font-size: 0.82em !important;
+    padding: 2px 6px !important;
+    font-size: 0.85em !important;
+    font-family: 'Fira Code', monospace !important;
 }
 
 /* ── Utility classes ─────────────────────────── */

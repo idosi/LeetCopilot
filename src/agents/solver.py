@@ -1,17 +1,18 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from src.core.llm import get_llm
 from src.schemas.state import AgentLog, LeetCodeSolverState, Solution
 
 
 class _SolutionModel(BaseModel):
-    code: str
-    description: str
+    code: str = Field(description="Complete, well-formatted, multi-line code with proper newlines and indentation. Never minify.")
+    description: str = Field(description="Detailed step-by-step technical walkthrough of the solution (3-5 sentences).")
     language: str
     approach: str
+    why_it_works: str = Field(description="Clear explanation of why this approach works, the mathematical/algorithmic intuition, and edge cases handled.")
 
 
 class _SolverOutput(BaseModel):
@@ -60,36 +61,26 @@ Your task:
 """
 
 _SYSTEM_PROMPT_TEMPLATE = """\
-You are a world-class competitive programmer specializing in algorithmically extreme solutions. \
-Given a LeetCode problem, generate exactly two {language} solutions.
+You are a world-class competitive programmer and algorithm tutor specializing in clean, optimal solutions.
+Given a LeetCode problem, generate exactly two {language} solutions: NAIVE and OPTIMAL.
+
+CODE FORMATTING RULES:
+- The `code` field MUST be valid, beautifully formatted {language} code with explicit newlines (\\n) and standard indentation.
+- NEVER minify the code or output it on a single line.
+- Use standard LeetCode class/method structure.
+- Set language = "{language_lower}".
+
+EXPLANATION & ANALYSIS RULES:
+- `description`: Provide a detailed technical walkthrough (3-5 sentences) explaining the intuition, data structures, pointer manipulations, and why the algorithm handles edge cases correctly. DO NOT output a short one-line summary.
 
 NAIVE SOLUTION rules:
 - approach field = "naive"
-- Brute-force / straightforward implementation — clarity over efficiency
+- Brute-force or straightforward implementation.
 
-OPTIMAL SOLUTION rules (non-negotiable — read every point):
+OPTIMAL SOLUTION rules:
 - approach field = "optimal"
-- You MUST reach the absolute theoretical lower bound for both time AND space complexity for this \
-problem class. "Good enough" is not acceptable.
-- Before choosing an algorithm, ask: can this be solved in fewer passes? Can auxiliary space be \
-reduced to O(1) or O(k) for a fixed alphabet/range k?
-- Prefer fixed-size arrays or buckets over hash maps whenever the input domain is bounded \
-(e.g., ASCII characters → int[128], digits → int[10], lowercase letters → int[26]). \
-Hash maps carry constant-factor overhead and poor cache locality — eliminate them when a \
-bounded array suffices.
-- Prefer in-place mutation, two-pointer, sliding window, bit manipulation, or monotonic \
-structures over allocating auxiliary data structures whenever the problem permits.
-- If the theoretical time lower bound is Ω(n), do not produce an O(n log n) solution. \
-If O(1) extra space is achievable, do not produce an O(n) space solution.
-- Never use a standard library sort when a counting/radix/bucket sort would be asymptotically \
-or practically superior given the stated constraints.
-- The solution must still be correct and handle all edge cases stated in the problem.
-
-BOTH solutions must:
-- Be syntactically valid, self-contained {language} code
-- Use a standard LeetCode-style class/function structure appropriate for {language}
-- Include a brief single-line comment describing the approach
-- Set language = "{language_lower}"
+- Must reach the absolute theoretical lower bound for time and space complexity.
+- Clearly explain the algorithmic leap that beats the naive approach.
 
 OUTPUT fields:
 - solver_status: "success" if both generated, "partial_success" if only one, "failed" if neither

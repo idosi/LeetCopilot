@@ -4,9 +4,12 @@ import src.config.settings as settings
 
 # מחירי טוקנים ל-1 מיליון (USD)
 MODEL_PRICING = {
-    # Google AI Studio (Gemini)
-    "gemini-1.5-flash": {"input": 0.075, "output": 0.30},
-    "gemini-1.5-pro": {"input": 1.25, "output": 5.00},
+    # Google AI Studio (Gemini 3 Family)
+    "gemini-3.8-flash": {"input": 0.10, "output": 0.40},
+    "gemini-3.5-flash": {"input": 0.075, "output": 0.30},
+    "gemini-3.1-pro-preview": {"input": 1.25, "output": 5.00},
+    "gemini-3.5-flash-lite": {"input": 0.05, "output": 0.20},
+    "gemini-3.1-flash-lite": {"input": 0.025, "output": 0.10},
     
     # Anthropic
     "claude-3-5-sonnet-20241022": {"input": 3.00, "output": 15.00},
@@ -32,14 +35,18 @@ def calculate_cost(model_name: str, input_tokens: int, output_tokens: int) -> fl
 
 def get_llm(model_name: Optional[str] = None, temperature: float = 0, api_key: Optional[str] = None):
     """Instantiates the LLM based on dynamic model selection."""
-    chosen_model = model_name or getattr(settings, "LLM_MODEL", "gpt-4o-mini")
+    chosen_model = model_name or getattr(settings, "LLM_MODEL", "gemini-3.8-flash")
     model_lower = chosen_model.lower()
 
     if "gemini" in model_lower:
         from langchain_google_genai import ChatGoogleGenerativeAI
         key = api_key or os.environ.get("GOOGLE_API_KEY") or None
+        
+        # הסרת קידומת models/ אם קיימת
+        clean_model = chosen_model.replace("models/", "").strip()
+
         return ChatGoogleGenerativeAI(
-            model=chosen_model,
+            model=clean_model,
             temperature=temperature,
             google_api_key=key,
         )
