@@ -626,7 +626,7 @@ def _render_problem_tab(final_state: LeetCodeSolverState, is_study: bool = False
     markdown_report = final_state.get("markdown_report") or final_state.get("report_markdown")
 
     if markdown_report:
-        st.markdown(markdown_report)
+        st.markdown(markdown_report, unsafe_allow_html=True)
     else:
         title = final_state.get("problem_title", "Untitled")
         description = final_state.get("problem_description", "")
@@ -938,14 +938,7 @@ if "final_state" in st.session_state:
             _render_tests_tab(final_state)
 
     elif run_mode == "study":
-        tab_study_guide, tab_tests = st.tabs([
-            "📚 Socratic Study Guide",
-            "🧪 Test Cases",
-        ])
-        with tab_study_guide:
-            _render_problem_tab(final_state, is_study=True)
-        with tab_tests:
-            _render_tests_tab(final_state)
+        _render_problem_tab(final_state, is_study=True)
 
     else:
         tab_report, tab_code, tab_tests = st.tabs([

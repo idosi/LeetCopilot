@@ -376,10 +376,10 @@ def _build_study_guide(state: LeetCodeSolverState) -> str:
         q = _safe_get(h, "guiding_question") or _safe_get(h, "title", "Hint")
         text = _safe_get(h, "text") or _safe_get(h, "hint", "")
         return (
-            f"<details>\n"
-            f"<summary>💡 <strong>Hint {n}:</strong> <em>{q}</em></summary>\n\n"
-            f"> {text}\n\n"
-            f"</details>"
+            f'<details style="margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem; background: #ffffff;">\n'
+            f'  <summary style="cursor: pointer; font-weight: 600; color: #1e293b;">💡 Hint {n}: <span style="font-weight: 400; font-style: italic; color: #64748b;">{q}</span></summary>\n'
+            f'  <div style="margin-top: 0.75rem; padding-left: 0.5rem; border-left: 3px solid #4f46e5; color: #334155; line-height: 1.6;">{text}</div>\n'
+            f'</details>\n'
         )
 
     hint_blocks = "\n\n".join(_hint_block(h) for h in hints) if hints else "_No hints generated._"
