@@ -1,6 +1,6 @@
 import os
 from typing import Optional
-import config.settings as settings
+import src.config.settings as settings
 
 # מחירי טוקנים ל-1 מיליון (USD)
 MODEL_PRICING = {
