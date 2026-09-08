@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 from langchain_anthropic import ChatAnthropic
 from pydantic import BaseModel
 
-import config.settings as settings
+import src.config.settings as settings
 from src.schemas.state import TestCase
 
 
