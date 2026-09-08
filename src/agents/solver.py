@@ -21,7 +21,6 @@ class _SolverOutput(BaseModel):
     solver_error: Optional[str] = None
 
 
-   
 class _HintModel(BaseModel):
     hint_number: int
     text: str
@@ -39,9 +38,6 @@ class _StudySolverOutput(BaseModel):
     solver_status: str
     solver_error: Optional[str] = None
 
-
-_llm = get_llm().with_structured_output(_SolverOutput)
-_study_llm = get_llm().with_structured_output(_StudySolverOutput)
 
 _STUDY_SYSTEM_PROMPT = """\
 You are a Socratic programming tutor. Your goal is to guide the student to the solution — NOT to give it.
@@ -117,7 +113,12 @@ def _run_full_mode(state: LeetCodeSolverState):
         language=language,
         language_lower=language.lower(),
     )
-    result: _SolverOutput = _llm.invoke([
+    
+    # אתחול ה-LLM רק בזמן ריצה
+    model_name = state.get("model_name")
+    llm = get_llm(model_name=model_name).with_structured_output(_SolverOutput)
+
+    result: _SolverOutput = llm.invoke([
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": _USER_TEMPLATE.format(
             title=state.get("problem_title", ""),
@@ -146,7 +147,12 @@ def _run_study_mode(state: LeetCodeSolverState):
         description=state.get("problem_description", ""),
         constraints=state.get("problem_constraints", ""),
     )
-    result: _StudySolverOutput = _study_llm.invoke([
+    
+    # אתחול ה-LLM רק בזמן ריצה
+    model_name = state.get("model_name")
+    study_llm = get_llm(model_name=model_name).with_structured_output(_StudySolverOutput)
+
+    result: _StudySolverOutput = study_llm.invoke([
         {"role": "system", "content": _STUDY_SYSTEM_PROMPT},
         {"role": "user", "content": user_msg},
     ])
@@ -161,7 +167,6 @@ def _run_study_mode(state: LeetCodeSolverState):
             {"hint_number": result.hint_3.hint_number, "text": result.hint_3.text, "guiding_question": result.hint_3.guiding_question},
         ],
     }
-    # Stub solutions so route_solver routes to performance without error
     language = state.get("language", "Python")
     stub = Solution(code="# Study Mode — no code generated", description="Study mode active.", language=language, approach="study")
     return stub, stub, study_output, result.solver_status or "success", result.solver_error
