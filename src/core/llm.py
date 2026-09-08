@@ -5,8 +5,8 @@ import config.settings as settings
 # מחירי טוקנים ל-1 מיליון (USD)
 MODEL_PRICING = {
     # Google AI Studio (Gemini)
-    "gemini-3.6-flash": {"input": 0.075, "output": 0.30},
-    "gemini-3.6-pro": {"input": 1.25, "output": 5.00},
+    "gemini-1.5-flash": {"input": 0.075, "output": 0.30},
+    "gemini-1.5-pro": {"input": 1.25, "output": 5.00},
     
     # Anthropic
     "claude-3-5-sonnet-20241022": {"input": 3.00, "output": 15.00},
@@ -30,28 +30,30 @@ def calculate_cost(model_name: str, input_tokens: int, output_tokens: int) -> fl
     return round(cost, 6)
 
 
-def get_llm(model_name: Optional[str] = None, temperature: float = 0):
+def get_llm(model_name: Optional[str] = None, temperature: float = 0, api_key: Optional[str] = None):
     """Instantiates the LLM based on dynamic model selection."""
-    chosen_model = model_name or getattr(settings, "LLM_MODEL", "gemini-1.5-flash")
+    chosen_model = model_name or getattr(settings, "LLM_MODEL", "gpt-4o-mini")
     model_lower = chosen_model.lower()
 
     if "gemini" in model_lower:
         from langchain_google_genai import ChatGoogleGenerativeAI
+        key = api_key or os.environ.get("GOOGLE_API_KEY") or None
         return ChatGoogleGenerativeAI(
             model=chosen_model,
             temperature=temperature,
-            google_api_key=os.environ.get("GOOGLE_API_KEY", ""),
+            google_api_key=key,
         )
 
     elif "gpt" in model_lower or "o1" in model_lower or "o3" in model_lower:
         from langchain_openai import ChatOpenAI
+        key = api_key or os.environ.get("OPENAI_API_KEY") or None
         return ChatOpenAI(
             model=chosen_model,
             temperature=temperature,
-            api_key=os.environ.get("OPENAI_API_KEY", ""),
+            api_key=key,
         )
 
-    elif "llama" in model_lower and "ollama" in model_lower:
+    elif "llama" in model_lower:
         from langchain_ollama import ChatOllama
         return ChatOllama(
             model=chosen_model,
@@ -62,9 +64,10 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0):
     else:
         from langchain_anthropic import ChatAnthropic
         timeout = getattr(settings, "LLM_TIMEOUT_SECONDS", 60)
+        key = api_key or os.environ.get("ANTHROPIC_API_KEY") or None
         return ChatAnthropic(
             model=chosen_model,
             timeout=timeout,
             temperature=temperature,
-            api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
+            api_key=key,
         )

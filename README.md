@@ -9,8 +9,8 @@ An AI-powered LeetCode mentor built with **Streamlit** and **LangGraph**. It orc
 - **🚀 Full Solution Mode**: Generates Naive & Optimal solutions with deep Big-O complexity breakdowns and edge-case testing.
 - **🧠 Study Mode**: Socratic hint-based workflow focusing on algorithmic intuition without spoiling the full solution.
 - **🔍 Review Mode**: Analyzes your own code, audits constants/bottlenecks, and gives an actionable optimization roadmap.
-- **🌍 Polyglot Support**: Python, Java, JavaScript, and C++.
-- **⚡ Multi-Model Engine**: Seamless support for Anthropic Claude, OpenAI, and Google Gemini models.
+- **🌍 Polyglot Support**: Python, Java, JavaScript, and C++. (we will add more languages later)
+- **⚡ Multi-Model Engine**: Seamless support for Anthropic Claude, OpenAI, and Google Gemini models. (we will add more models on later versions)
 
 ---
 
