@@ -235,10 +235,9 @@ h1, h2, h3, h4 {
 }
 
 /* ── Code blocks & Pre ───────────────────────── */
-/* בלוקי קוד ב-Markdown וב-st.code */
 div[data-testid="stCodeBlock"],
 .stMarkdown pre {
-    background-color: #0f172a !important; /* רקע כהה ואחיד (Slate 900) */
+    background-color: #0f172a !important;
     border: 1px solid #334155 !important;
     border-radius: 12px !important;
     padding: 1.2rem !important;
@@ -246,12 +245,11 @@ div[data-testid="stCodeBlock"],
     overflow-x: auto !important;
 }
 
-/* הטקסט והשורות בתוך בלוק הקוד */
 .stMarkdown pre code,
 div[data-testid="stCodeBlock"] code,
 div[data-testid="stCodeBlock"] pre {
-    background: transparent !important; /* מבטל את הרקע הסגול שמופיע בכל שורה */
-    color: #e2e8f0 !important;          /* טקסט בהיר וקריא */
+    background: transparent !important;
+    color: #e2e8f0 !important;
     font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
     font-size: 0.9rem !important;
     line-height: 1.65 !important;
@@ -260,13 +258,11 @@ div[data-testid="stCodeBlock"] pre {
     letter-spacing: 0.02em !important;
 }
 
-/* צביעת הערות (comments) וקוד קריא יותר */
 .stMarkdown pre code .hljs-comment {
     color: #94a3b8 !important;
     font-style: italic !important;
 }
 
-/* מחזיר את העיצוב הסגול היפה *רק* ל-inline code (שמילים בודדות בטקסט הרגיל) */
 .stMarkdown :not(pre) > code {
     background: rgba(79, 70, 229, 0.08) !important;
     color: #4f46e5 !important;
@@ -459,13 +455,12 @@ def _render_sidebar_inputs(model_default: str = SUPPORTED_MODELS[0]):
         st.text_input(
             "Enter your API Key",
             type="password",
-            placeholder="sk-ant-... / sk-...",
+            placeholder="sk-ant-... / AIzaSy...",
             key="user_api_key",
             label_visibility="collapsed",
             help="Your API key is stored only in this session and is never saved.",
         )
         
-        # סקריפט למניעת השתלטות מנהלי סיסמאות
         st.components.v1.html(
             """
             <script>
@@ -641,7 +636,7 @@ def _render_problem_tab(final_state: LeetCodeSolverState, is_study: bool = False
         ]
         if constraints:
             lines.extend(["", f"**Constraints:**\n{constraints}"])
-        st.markdown("\n".join(lines))
+        st.markdown("\n".join(lines), unsafe_allow_html=True)
 
 
 def _render_solutions_tab(final_state: LeetCodeSolverState):
@@ -858,39 +853,34 @@ if submitted and mode and not st.session_state.is_running:
     selected_model = st.session_state.get("global_selected_model", SUPPORTED_MODELS[0])
     provided_key = st.session_state.get("user_api_key", "").strip()
 
-    # בדיקת תווים לא תקינים במפתח
+    # בדיקת חסימת עברית במפתח
     if re.search(r"[\u0590-\u05FF]", provided_key):
         st.error("❌ The API Key contains Hebrew characters. Please enter a valid English key.")
         st.stop()
 
-    # בדיקת מפתח ייעודית לפי ספק המודל הנבחר
+    # 2. זיהוי ספק המודל הנבחר
     model_lower = selected_model.lower()
     if "gemini" in model_lower:
         provider_name = "Google Gemini"
-        # בדיקה קודם כל אם הוזן מפתח ידנית ב-UI; אם לא, בודק ב-env
-        active_key = provided_key or os.getenv("GOOGLE_API_KEY", "").strip()
         env_var = "GOOGLE_API_KEY"
     elif "claude" in model_lower:
         provider_name = "Anthropic Claude"
-        active_key = provided_key or os.getenv("ANTHROPIC_API_KEY", "").strip()
         env_var = "ANTHROPIC_API_KEY"
     elif "llama" in model_lower:
         provider_name = "Ollama"
-        active_key = "local"
         env_var = None
     else:
         provider_name = "OpenAI"
-        active_key = provided_key or os.getenv("OPENAI_API_KEY", "").strip()
         env_var = "OPENAI_API_KEY"
 
-    # עצירה מיידית והצגת הודעת שגיאה ברורה אם אין מפתח
-    if not active_key:
-        st.error(f"🔑 Please enter a valid API Key for **{provider_name}** in the sidebar before running.")
-        st.stop()
-
-    # השמת המפתח הנבחר למשתני הסביבה של הריצה
+    # 3. חיוב המשתמש להזין מפתח בסיידבר (אלא אם זה מודל מקומי כמו Ollama)
     if env_var:
-        os.environ[env_var] = active_key
+        if not provided_key or len(provided_key) < 15:
+            st.error(f"🔑 Please enter your **{provider_name} API Key** in the sidebar before running.")
+            st.stop()
+        
+        # השמת המפתח של המשתמש לסשן הנוכחי בלבד
+        os.environ[env_var] = provided_key  
 
     if not raw_desc or not raw_desc.strip():
         st.error("Problem description cannot be empty.")
