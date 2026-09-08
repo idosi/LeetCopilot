@@ -1,3 +1,5 @@
+import os
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -5,7 +7,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import streamlit as st
-from langchain_community.callbacks import get_openai_callback
 
 from src.core.graph import build_graph
 from src.core.llm import calculate_cost, SUPPORTED_MODELS
@@ -408,7 +409,7 @@ def _build_initial_state(
     )
 
 
-def _render_sidebar_guide():
+def _render_sidebar_inputs(model_default: str = SUPPORTED_MODELS[0]):
     st.sidebar.markdown("""
     <div style="background:var(--bg,#f1f5f9);border-bottom:1px solid #e2e8f0;padding:0.2rem 1rem 0.85rem;margin-top:-0.25rem;">
         <div style="display:flex;align-items:center;gap:10px;">
@@ -424,15 +425,45 @@ def _render_sidebar_guide():
     with st.sidebar:
         st.markdown('<div style="padding:0.75rem 1rem 0;">', unsafe_allow_html=True)
         st.markdown('<span class="lc-label">MODEL CONFIGURATION</span>', unsafe_allow_html=True)
+        selected_idx = SUPPORTED_MODELS.index(model_default) if model_default in SUPPORTED_MODELS else 0
         st.selectbox(
             "Select LLM Engine",
             SUPPORTED_MODELS,
-            index=0,
+            index=selected_idx,
             key="global_selected_model",
             label_visibility="collapsed"
         )
+        
+        st.markdown('<span class="lc-label" style="margin-top:0.75rem;">API KEY</span>', unsafe_allow_html=True)
+        st.text_input(
+            "Enter your API Key",
+            type="password",
+            placeholder="sk-ant-... / sk-...",
+            key="user_api_key",
+            label_visibility="collapsed",
+            help="Your API key is stored only in this session and is never saved.",
+        )
+        
+        # סקריפט למניעת השתלטות מנהלי סיסמאות
+        st.components.v1.html(
+            """
+            <script>
+            const inputs = window.parent.document.querySelectorAll('input[type="password"]');
+            inputs.forEach(input => {
+                input.setAttribute('autocomplete', 'new-password');
+                input.setAttribute('data-lpignore', 'true');
+                input.setAttribute('data-1p-ignore', 'true');
+            });
+            </script>
+            """,
+            height=0,
+            width=0,
+        )
         st.markdown('</div>', unsafe_allow_html=True)
 
+
+def _render_sidebar_guide():
+    _render_sidebar_inputs()
     st.sidebar.markdown("""
 <div style="padding:1rem;">
     <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#94a3b8;margin-bottom:0.75rem;">How It Works</div>
@@ -469,8 +500,8 @@ def _render_sidebar_guide():
     <div style="height:1px;background:#e2e8f0;margin:1rem 0;"></div>
     <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#94a3b8;margin-bottom:0.5rem;">Tips</div>
     <div style="color:#64748b;font-size:0.8rem;line-height:1.7;">
+        • Enter your API key above to begin<br/>
         • Paste the <span style="color:#4f46e5;font-weight:600;">full problem statement</span> with examples<br/>
-        • Constraints are optional but improve quality<br/>
         • Runs typically take <span style="color:#10b981;font-weight:600;">30–90 seconds</span>
     </div>
 </div>
@@ -491,29 +522,9 @@ def _render_sidebar_status(final_state: LeetCodeSolverState):
     status_icon = "✓" if is_ok else "✗"
     status_text = "COMPLETED" if is_ok else graph_status.upper()
 
-    st.sidebar.markdown("""
-<div style="background:var(--bg,#f1f5f9);border-bottom:1px solid #e2e8f0;padding-bottom:0.75rem;margin-bottom:0.5rem;">
-    <div style="display:flex;align-items:center;gap:10px;">
-        <div style="width:38px;height:38px;background:linear-gradient(135deg,#4f46e5,#6366f1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;box-shadow:0 4px 10px rgba(79,70,229,0.3);">🧠</div>
-        <div>
-            <div style="font-size:1.05rem;font-weight:800;background:linear-gradient(135deg,#4f46e5,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.02em;line-height:1.2;">LeetCopilot</div>
-            <div style="font-size:0.68rem;color:#64748b;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;margin-top:1px;">AI-Powered Mentor</div>
-        </div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+    _render_sidebar_inputs(model_default=model_used)
 
-    with st.sidebar:
-        st.markdown('<div style="padding:0.5rem 0 0;"><span class="lc-label">MODEL CONFIGURATION</span></div>', unsafe_allow_html=True)
-        st.selectbox(
-            "Select LLM Engine",
-            SUPPORTED_MODELS,
-            index=SUPPORTED_MODELS.index(model_used) if model_used in SUPPORTED_MODELS else 0,
-            key="global_selected_model",
-            label_visibility="collapsed"
-        )
-
-    summary_html = f"""<div style="padding:0.75rem 0 0.5rem;">
+    summary_html = f"""<div style="padding:0.75rem 1rem 0.5rem;">
 <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#94a3b8;margin-bottom:0.85rem;">Run Summary</div>
 
 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:0.65rem;">
@@ -548,7 +559,7 @@ def _render_sidebar_status(final_state: LeetCodeSolverState):
             f'<div class="agent-row"><span style="font-size:0.85rem;">{_ICON_MAP.get(log.get("status", ""), "•")}</span><div><span style="color:#0f172a;font-weight:600;font-size:0.8rem;">{log.get("agent_name", "unknown")}</span><span style="color:#64748b;font-size:0.75rem;"> — {log.get("action", "")}</span></div></div>'
             for log in agent_logs
         ])
-        timeline_html = f"""<div style="padding:0.5rem 0 1rem;">
+        timeline_html = f"""<div style="padding:0.5rem 1rem 1rem;">
 <div style="height:1px;background:#e2e8f0;margin-bottom:0.75rem;"></div>
 <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#94a3b8;margin-bottom:0.5rem;">Agent Timeline</div>
 <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:0.5rem 0.75rem;">
@@ -558,7 +569,7 @@ def _render_sidebar_status(final_state: LeetCodeSolverState):
         st.sidebar.markdown(timeline_html, unsafe_allow_html=True)
 
     if error_logs:
-        st.sidebar.markdown('<div style="padding:0.5rem 0 0;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#dc2626;margin-bottom:0.4rem;">Errors</div>', unsafe_allow_html=True)
+        st.sidebar.markdown('<div style="padding:0.5rem 1rem 0;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#dc2626;margin-bottom:0.4rem;">Errors</div>', unsafe_allow_html=True)
         for err in error_logs:
             st.sidebar.error(err)
 
@@ -824,6 +835,24 @@ if submitted and mode and not st.session_state.is_running:
     raw_lang = st.session_state.get(f"{mode}_selected_language", "Python")
     raw_user_code = st.session_state.get("review_user_code", "")
     selected_model = st.session_state.get("global_selected_model", SUPPORTED_MODELS[0])
+    provided_key = st.session_state.get("user_api_key", "").strip()
+
+    # בדיקת חסימת עברית במפתח
+    if re.search(r"[\u0590-\u05FF]", provided_key):
+        st.error("❌ The API Key contains Hebrew characters. Please enter a valid English key.")
+        st.stop()
+
+    if not provided_key and not (os.getenv("ANTHROPIC_API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("GOOGLE_API_KEY")):
+        st.error("🔑 Please enter your API Key in the sidebar before running.")
+        st.stop()
+
+    if provided_key:
+        if "claude" in selected_model.lower():
+            os.environ["ANTHROPIC_API_KEY"] = provided_key
+        elif "gemini" in selected_model.lower():
+            os.environ["GOOGLE_API_KEY"] = provided_key
+        else:
+            os.environ["OPENAI_API_KEY"] = provided_key
 
     if not raw_desc or not raw_desc.strip():
         st.error("Problem description cannot be empty.")
