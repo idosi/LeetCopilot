@@ -858,22 +858,39 @@ if submitted and mode and not st.session_state.is_running:
     selected_model = st.session_state.get("global_selected_model", SUPPORTED_MODELS[0])
     provided_key = st.session_state.get("user_api_key", "").strip()
 
-    # בדיקת חסימת עברית במפתח
+    # בדיקת תווים לא תקינים במפתח
     if re.search(r"[\u0590-\u05FF]", provided_key):
         st.error("❌ The API Key contains Hebrew characters. Please enter a valid English key.")
         st.stop()
 
-    if not provided_key and not (os.getenv("ANTHROPIC_API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("GOOGLE_API_KEY")):
-        st.error("🔑 Please enter your API Key in the sidebar before running.")
+    # בדיקת מפתח ייעודית לפי ספק המודל הנבחר
+    model_lower = selected_model.lower()
+    if "gemini" in model_lower:
+        provider_name = "Google Gemini"
+        # בדיקה קודם כל אם הוזן מפתח ידנית ב-UI; אם לא, בודק ב-env
+        active_key = provided_key or os.getenv("GOOGLE_API_KEY", "").strip()
+        env_var = "GOOGLE_API_KEY"
+    elif "claude" in model_lower:
+        provider_name = "Anthropic Claude"
+        active_key = provided_key or os.getenv("ANTHROPIC_API_KEY", "").strip()
+        env_var = "ANTHROPIC_API_KEY"
+    elif "llama" in model_lower:
+        provider_name = "Ollama"
+        active_key = "local"
+        env_var = None
+    else:
+        provider_name = "OpenAI"
+        active_key = provided_key or os.getenv("OPENAI_API_KEY", "").strip()
+        env_var = "OPENAI_API_KEY"
+
+    # עצירה מיידית והצגת הודעת שגיאה ברורה אם אין מפתח
+    if not active_key:
+        st.error(f"🔑 Please enter a valid API Key for **{provider_name}** in the sidebar before running.")
         st.stop()
 
-    if provided_key:
-        if "claude" in selected_model.lower():
-            os.environ["ANTHROPIC_API_KEY"] = provided_key
-        elif "gemini" in selected_model.lower():
-            os.environ["GOOGLE_API_KEY"] = provided_key
-        else:
-            os.environ["OPENAI_API_KEY"] = provided_key
+    # השמת המפתח הנבחר למשתני הסביבה של הריצה
+    if env_var:
+        os.environ[env_var] = active_key
 
     if not raw_desc or not raw_desc.strip():
         st.error("Problem description cannot be empty.")
